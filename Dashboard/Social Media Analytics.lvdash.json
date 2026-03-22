@@ -1,0 +1,3145 @@
+{
+  "datasets": [
+    {
+      "name": "93925d3c",
+      "displayName": "Tweets Data",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  fact_tweet"
+      ],
+      "columns": [
+        {
+          "displayName": "Valid Tweets %",
+          "description": "Percentage of tweets that are valid",
+          "expression": "COUNT_IF(`is_valid` = true) * 100.0 / COUNT(`*`)"
+        },
+        {
+          "displayName": "Day Name",
+          "description": "Day of week name (Mon-Sun)",
+          "expression": "CASE WHEN `day_of_week` = 1 THEN 'Mon' WHEN `day_of_week` = 2 THEN 'Tue' WHEN `day_of_week` = 3 THEN 'Wed' WHEN `day_of_week` = 4 THEN 'Thu' WHEN `day_of_week` = 5 THEN 'Fri' WHEN `day_of_week` = 6 THEN 'Sat' WHEN `day_of_week` = 7 THEN 'Sun' ELSE 'Unknown' END"
+        },
+        {
+          "displayName": "Day Type",
+          "description": "Weekday vs Weekend classification",
+          "expression": "CASE WHEN `day_of_week` IN (6, 7) THEN 'Weekend' ELSE 'Weekday' END"
+        }
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "14a34a39",
+      "displayName": "User Metrics",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  user_metrics"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "93dfaa80",
+      "displayName": "Sentiment Metrics",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  sentiment_metrics"
+      ],
+      "columns": [
+        {
+          "displayName": "Sentiment Label",
+          "description": "Clean sentiment category label",
+          "expression": "CASE WHEN `metric_name` = 'positive_pct' THEN 'Positive' WHEN `metric_name` = 'negative_pct' THEN 'Negative' WHEN `metric_name` = 'neutral_pct' THEN 'Neutral' ELSE `metric_name` END"
+        },
+        {
+          "displayName": "Metric Value (Numeric)",
+          "description": "Numeric version of metric_value for correct aggregation",
+          "expression": "MAX(CAST(`metric_value` AS DOUBLE))"
+        }
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "aa68612c",
+      "displayName": "Dim Country",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  dim_country"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "10da9c5d",
+      "displayName": "Dim Topic",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  dim_topic"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "418778f7",
+      "displayName": "Tweets Per Day",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  tweets_per_day"
+      ],
+      "columns": [
+        {
+          "displayName": "30-Day Rolling Avg",
+          "description": "30-day rolling average of daily tweet count",
+          "expression": "AVG(`tweet_count`) AGGREGATE OVER (ORDER BY `tweet_date` TRAILING 30 DAY)"
+        }
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "40dbf3bd",
+      "displayName": "Users By Country",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  users_by_country"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "5a84787d",
+      "displayName": "Valid Tweets Per Topic",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  valid_tweets_per_topic"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "59bfd172",
+      "displayName": "Tweets Per Hour",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  tweets_per_hour"
+      ],
+      "columns": [
+        {
+          "displayName": "Peak Hour",
+          "description": "Hour of day with the highest tweet count",
+          "expression": "MAX_BY(`tweet_hour`, `tweet_count`)"
+        },
+        {
+          "displayName": "Peak Hour AM/PM",
+          "description": "Peak hour formatted with AM/PM",
+          "expression": "CASE WHEN MAX_BY(`tweet_hour`, `tweet_count`) = 0 THEN '12 AM' WHEN MAX_BY(`tweet_hour`, `tweet_count`) < 12 THEN CONCAT(CAST(MAX_BY(`tweet_hour`, `tweet_count`) AS STRING), ' AM') WHEN MAX_BY(`tweet_hour`, `tweet_count`) = 12 THEN '12 PM' ELSE CONCAT(CAST(MAX_BY(`tweet_hour`, `tweet_count`) - 12 AS STRING), ' PM') END"
+        }
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "31d925f9",
+      "displayName": "Daily Valid Rate",
+      "queryLines": [
+        "SELECT\n",
+        "  t.tweet_date,\n",
+        "  t.tweet_count,\n",
+        "  v.valid_tweet_count\n",
+        "FROM\n",
+        "  tweets_per_day t\n",
+        "    LEFT JOIN valid_tweets_per_day v\n",
+        "      ON t.tweet_date = v.tweet_date"
+      ],
+      "columns": [
+        {
+          "displayName": "Valid Rate %",
+          "description": "Percentage of valid tweets out of total tweets",
+          "expression": "SUM(`valid_tweet_count`) * 100.0 / SUM(`tweet_count`)"
+        }
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "0690af54",
+      "displayName": "Engagement Mix",
+      "queryLines": [
+        "SELECT\n",
+        "  'Likes' as metric,\n",
+        "  SUM(likes) as total\n",
+        "FROM\n",
+        "  fact_tweet\n",
+        "UNION ALL\n",
+        "SELECT\n",
+        "  'Retweets',\n",
+        "  SUM(retweets)\n",
+        "FROM\n",
+        "  fact_tweet\n",
+        "UNION ALL\n",
+        "SELECT\n",
+        "  'Replies',\n",
+        "  SUM(replies)\n",
+        "FROM\n",
+        "  fact_tweet"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "7181ce1b",
+      "displayName": "Sentiment Over Time",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  sentiment_over_time"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "ed617431",
+      "displayName": "Sentiment Trend",
+      "queryLines": [
+        "SELECT\n",
+        "  sentiment_date,\n",
+        "  'Positive' as sentiment,\n",
+        "  positive_count as count\n",
+        "FROM\n",
+        "  sentiment_over_time\n",
+        "UNION ALL\n",
+        "SELECT\n",
+        "  sentiment_date,\n",
+        "  'Negative' as sentiment,\n",
+        "  negative_count as count\n",
+        "FROM\n",
+        "  sentiment_over_time\n",
+        "UNION ALL\n",
+        "SELECT\n",
+        "  sentiment_date,\n",
+        "  'Neutral' as sentiment,\n",
+        "  neutral_count as count\n",
+        "FROM\n",
+        "  sentiment_over_time"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "95d77a5b",
+      "displayName": "Sentiment Trend",
+      "queryLines": [
+        "SELECT\n",
+        "  sentiment_date,\n",
+        "  'Positive' as sentiment,\n",
+        "  positive_count as count\n",
+        "FROM\n",
+        "  social_catalog.gold.sentiment_over_time\n",
+        "UNION ALL\n",
+        "SELECT\n",
+        "  sentiment_date,\n",
+        "  'Negative',\n",
+        "  negative_count\n",
+        "FROM\n",
+        "  social_catalog.gold.sentiment_over_time\n",
+        "UNION ALL\n",
+        "SELECT\n",
+        "  sentiment_date,\n",
+        "  'Neutral',\n",
+        "  neutral_count\n",
+        "FROM\n",
+        "  social_catalog.gold.sentiment_over_time"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "c4299dd8",
+      "displayName": "Sentiment By Topic",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  agg_sentiment_by_topic"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "0863f10d",
+      "displayName": "Trend Metrics",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  trend_metrics"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "1fb7adeb",
+      "displayName": "Trend Over Time",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  trend_over_time"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "368e2037",
+      "displayName": "Fact Trend",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  fact_trend"
+      ],
+      "columns": [
+        {
+          "displayName": "Sentiment Zone",
+          "description": "Categorizes sentiment_index into Positive/Neutral/Negative zones",
+          "expression": "CASE WHEN `sentiment_index` > 0.02 THEN 'Positive' WHEN `sentiment_index` < -0.02 THEN 'Negative' ELSE 'Neutral' END"
+        }
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "d4c1957e",
+      "displayName": "Dim User",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  dim_user"
+      ],
+      "columns": [
+        {
+          "displayName": "Verified Count",
+          "description": "Count of verified users",
+          "expression": "COUNT_IF(`is_verified` = true)"
+        }
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "7e40ac0d",
+      "displayName": "Top Users By Followers",
+      "queryLines": [
+        "SELECT DISTINCT\n",
+        "  user_id,\n",
+        "  country,\n",
+        "  followers_count,\n",
+        "  following_count,\n",
+        "  posts_count\n",
+        "FROM\n",
+        "  top_users_by_followers"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "63b8933e",
+      "displayName": "User Influence",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  agg_user_influence"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    },
+    {
+      "name": "48df8e7b",
+      "displayName": "User Creation Trend",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  user_creation_trend"
+      ],
+      "catalog": "social_catalog",
+      "schema": "gold"
+    }
+  ],
+  "pages": [
+    {
+      "name": "98284002",
+      "displayName": "Overview",
+      "layout": [
+        {
+          "widget": {
+            "name": "16c1d881",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93925d3c",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Tweets",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total Tweets"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "6d105650",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93925d3c",
+                  "fields": [
+                    {
+                      "name": "measure(Valid Tweets %)",
+                      "expression": "MEASURE(`Valid Tweets %`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Valid Tweets %",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(Valid Tweets %)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Valid Tweets %"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "008b155a",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "14a34a39",
+                  "fields": [
+                    {
+                      "name": "max(metric_value)",
+                      "expression": "MAX(`metric_value`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`metric_name` IN ('total_users')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Users",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "max(metric_value)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total Users"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "e9d8a5d9",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "10da9c5d",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Topics Tracked",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Topics Tracked"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 7,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "19a988d6",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "aa68612c",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Countries",
+                "showTitle": true,
+                "showDescription": false
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Total Countries"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "257059a4",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "418778f7",
+                  "fields": [
+                    {
+                      "name": "tweet_date",
+                      "expression": "`tweet_date`"
+                    },
+                    {
+                      "name": "sum(tweet_count)",
+                      "expression": "SUM(`tweet_count`)"
+                    },
+                    {
+                      "name": "measure(30-Day Rolling Avg)",
+                      "expression": "MEASURE(`30-Day Rolling Avg`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`tweet_date` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "frame": {
+                "title": "Tweet Volume Over Time",
+                "showTitle": true
+              },
+              "widgetType": "combo",
+              "encodings": {
+                "x": {
+                  "fieldName": "tweet_date",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "primary": {
+                    "fields": [
+                      {
+                        "fieldName": "sum(tweet_count)",
+                        "displayName": "Daily Tweet Count"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    }
+                  },
+                  "secondary": {
+                    "fields": [
+                      {
+                        "fieldName": "measure(30-Day Rolling Avg)",
+                        "displayName": "30-Day Rolling Avg"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    }
+                  }
+                },
+                "color": {
+                  "legend": {
+                    "position": "top"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 12,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "22ae2d3a",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93dfaa80",
+                  "fields": [
+                    {
+                      "name": "measure(Metric Value (Numeric))",
+                      "expression": "MEASURE(`Metric Value (Numeric)`)"
+                    },
+                    {
+                      "name": "Sentiment Label",
+                      "expression": "`Sentiment Label`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`metric_name` IN ('positive_pct', 'negative_pct', 'neutral_pct')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Sentiment Breakdown",
+                "showTitle": true
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "measure(Metric Value (Numeric))",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Percentage"
+                },
+                "color": {
+                  "fieldName": "Sentiment Label",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "Sentiment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Positive",
+                        "color": "#2ECC71"
+                      },
+                      {
+                        "value": "Neutral",
+                        "color": "#F39C12"
+                      },
+                      {
+                        "value": "Negative",
+                        "color": "#E74C3C"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "9b972f96",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "40dbf3bd",
+                  "fields": [
+                    {
+                      "name": "country",
+                      "expression": "`country`"
+                    },
+                    {
+                      "name": "sum(total_users)",
+                      "expression": "SUM(`total_users`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`country` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`country` NOT IN ('')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Users by Country",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "country",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Country",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(total_users)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total Users",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "country",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Country",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 7,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "ab6b5b70",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "5a84787d",
+                  "fields": [
+                    {
+                      "name": "topic_category",
+                      "expression": "`topic_category`"
+                    },
+                    {
+                      "name": "sum(valid_tweet_count)",
+                      "expression": "SUM(`valid_tweet_count`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`topic_category` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`topic_category` NOT IN ('')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Top Topics",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(valid_tweet_count)",
+                  "displayName": "Valid Tweet Count",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "topic_category",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Topic",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "color": {
+                  "fieldName": "topic_category",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Topic",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 13,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "96c45a67",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93925d3c",
+                  "fields": [
+                    {
+                      "name": "tweet_date",
+                      "expression": "`tweet_date`"
+                    },
+                    {
+                      "name": "avg(engagement_rate_pct)",
+                      "expression": "AVG(`engagement_rate_pct`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`tweet_date` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`engagement_rate_pct` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Engagement Trend",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "tweet_date",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(engagement_rate_pct)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 2
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Avg Engagement Rate %",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 19,
+            "width": 12,
+            "height": 5
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "30b54512",
+      "displayName": "Global Filters",
+      "layout": [
+        {
+          "widget": {
+            "name": "cb1c8f37",
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {},
+              "frame": {
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "7d762dd1",
+      "displayName": "Tweet Activity",
+      "layout": [
+        {
+          "widget": {
+            "name": "fb55b62f",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "418778f7",
+                  "fields": [
+                    {
+                      "name": "avg(tweet_count)",
+                      "expression": "AVG(`tweet_count`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`tweet_date` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Avg Tweets / Day",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(tweet_count)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Avg Tweets / Day"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "4727f373",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "59bfd172",
+                  "fields": [
+                    {
+                      "name": "measure(Peak Hour AM/PM)",
+                      "expression": "MEASURE(`Peak Hour AM/PM`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`tweet_hour` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Peak Hour",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(Peak Hour AM/PM)",
+                  "displayName": "Peak Hour"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 5,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "2c3ec1c9",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93925d3c",
+                  "fields": [
+                    {
+                      "name": "sum(likes)",
+                      "expression": "SUM(`likes`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Likes",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(likes)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total Likes"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "e8d3be86",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "31d925f9",
+                  "fields": [
+                    {
+                      "name": "tweet_date",
+                      "expression": "`tweet_date`"
+                    },
+                    {
+                      "name": "sum(tweet_count)",
+                      "expression": "SUM(`tweet_count`)"
+                    },
+                    {
+                      "name": "sum(valid_tweet_count)",
+                      "expression": "SUM(`valid_tweet_count`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`tweet_date` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "frame": {
+                "title": "Daily Tweet Volume — Total vs Valid",
+                "showTitle": true
+              },
+              "widgetType": "combo",
+              "encodings": {
+                "x": {
+                  "fieldName": "tweet_date",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "primary": {
+                    "fields": [
+                      {
+                        "fieldName": "sum(tweet_count)",
+                        "displayName": "Total Tweets"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    }
+                  },
+                  "secondary": {
+                    "fields": [
+                      {
+                        "fieldName": "sum(valid_tweet_count)",
+                        "displayName": "Valid Tweets"
+                      }
+                    ],
+                    "scale": {
+                      "type": "quantitative"
+                    }
+                  }
+                },
+                "color": {
+                  "legend": {
+                    "position": "top"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 12,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "3c750723",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "59bfd172",
+                  "fields": [
+                    {
+                      "name": "tweet_hour",
+                      "expression": "`tweet_hour`"
+                    },
+                    {
+                      "name": "sum(tweet_count)",
+                      "expression": "SUM(`tweet_count`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`tweet_hour` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Tweets by Hour of Day",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "tweet_hour",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Hour",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(tweet_count)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Tweet Count",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "tweet_hour",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Hour",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 12,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "71d0b2e2",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93925d3c",
+                  "fields": [
+                    {
+                      "name": "Day Type",
+                      "expression": "`Day Type`"
+                    },
+                    {
+                      "name": "Day Name",
+                      "expression": "`Day Name`"
+                    },
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`day_of_week` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Tweets by Day of Week",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "Day Name",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Day",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "Mon",
+                        "Tue",
+                        "Wed",
+                        "Thu",
+                        "Fri",
+                        "Sat",
+                        "Sun"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "count(*)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Tweet Count",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "Day Type",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "Day Type",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Weekday",
+                        "color": "#3498DB"
+                      },
+                      {
+                        "value": "Weekend",
+                        "color": "#E74C3C"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 12,
+            "width": 12,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "02bd2f31",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0690af54",
+                  "fields": [
+                    {
+                      "name": "sum(total)",
+                      "expression": "SUM(`total`)"
+                    },
+                    {
+                      "name": "metric",
+                      "expression": "`metric`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Engagement Mix",
+                "showTitle": true
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "sum(total)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total"
+                },
+                "color": {
+                  "fieldName": "metric",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "Metric",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Likes",
+                        "color": "#3498DB"
+                      },
+                      {
+                        "value": "Retweets",
+                        "color": "#F39C12"
+                      },
+                      {
+                        "value": "Replies",
+                        "color": "#2ECC71"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "bac5283c",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93925d3c",
+                  "fields": [
+                    {
+                      "name": "tweet_date",
+                      "expression": "`tweet_date`"
+                    },
+                    {
+                      "name": "sum(impressions)",
+                      "expression": "SUM(`impressions`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`tweet_date` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`impressions` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Impressions Over Time",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "tweet_date",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(impressions)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total Impressions",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 17,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "fc73fce9",
+      "displayName": "Sentiment analysis",
+      "layout": [
+        {
+          "widget": {
+            "name": "ba8a61b4",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93dfaa80",
+                  "fields": [
+                    {
+                      "name": "measure(Metric Value (Numeric))",
+                      "expression": "MEASURE(`Metric Value (Numeric)`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`metric_name` IN ('avg_sentiment_score')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Avg Sentiment",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(Metric Value (Numeric))",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 4
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Avg Sentiment Score"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 5,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "abbb39d5",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "93dfaa80",
+                  "fields": [
+                    {
+                      "name": "measure(Metric Value (Numeric))",
+                      "expression": "MEASURE(`Metric Value (Numeric)`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`metric_name` IN ('positive_pct')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Positive Tweets",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(Metric Value (Numeric))",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Positive Tweets %"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 0,
+            "width": 7,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "07a509ac",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7181ce1b",
+                  "fields": [
+                    {
+                      "name": "topic_category",
+                      "expression": "`topic_category`"
+                    },
+                    {
+                      "name": "sentiment_date",
+                      "expression": "`sentiment_date`"
+                    },
+                    {
+                      "name": "avg(avg_sentiment_score)",
+                      "expression": "AVG(`avg_sentiment_score`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`sentiment_date` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`topic_category` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Sentiment Score Over Time by Topic",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "sentiment_date",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(avg_sentiment_score)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 3
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Avg Sentiment Score",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "topic_category",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "Topic",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "eae58d03",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "c4299dd8",
+                  "fields": [
+                    {
+                      "name": "dominant_sentiment",
+                      "expression": "`dominant_sentiment`"
+                    },
+                    {
+                      "name": "topic_name",
+                      "expression": "`topic_name`"
+                    },
+                    {
+                      "name": "sum(total_tweets)",
+                      "expression": "SUM(`total_tweets`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`topic_name` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`dominant_sentiment` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Dominant Sentiment per Topic",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "topic_name",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Topic",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(total_tweets)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Total Tweets",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "dominant_sentiment",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "Dominant Sentiment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Positive",
+                        "color": "#2ECC71"
+                      },
+                      {
+                        "value": "Negative",
+                        "color": "#E74C3C"
+                      },
+                      {
+                        "value": "Neutral",
+                        "color": "#F39C12"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "eda74095",
+      "displayName": "Trend analysis",
+      "layout": [
+        {
+          "widget": {
+            "name": "65d04270",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "1fb7adeb",
+                  "fields": [
+                    {
+                      "name": "country",
+                      "expression": "`country`"
+                    },
+                    {
+                      "name": "trend_timestamp",
+                      "expression": "`trend_timestamp`"
+                    },
+                    {
+                      "name": "sum(total_tweet_volume)",
+                      "expression": "SUM(`total_tweet_volume`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`trend_timestamp` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`country` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Tweet Volume Over Time by Country",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "trend_timestamp",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(total_tweet_volume)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total Tweet Volume",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "country",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "Country",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "3f5295ab",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "0863f10d",
+                  "fields": [
+                    {
+                      "name": "country",
+                      "expression": "`country`"
+                    },
+                    {
+                      "name": "avg(avg_trend_score)",
+                      "expression": "AVG(`avg_trend_score`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`country` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Trend Score by Country",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "avg(avg_trend_score)",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Avg Trend Score",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "country",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Country",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "color": {
+                  "fieldName": "country",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Country",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "07a0a8bd",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "368e2037",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    },
+                    {
+                      "name": "trend_strength",
+                      "expression": "`trend_strength`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`trend_strength` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Trend Strength Categories",
+                "showTitle": true
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "count(*)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Tweet Count"
+                },
+                "color": {
+                  "fieldName": "trend_strength",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "Trend Strength",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Viral",
+                        "color": "#2ECC71"
+                      },
+                      {
+                        "value": "Trending",
+                        "color": "#3498DB"
+                      },
+                      {
+                        "value": "Growing",
+                        "color": "#F39C12"
+                      },
+                      {
+                        "value": "Low",
+                        "color": "#E74C3C"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "ec2f6493",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "368e2037",
+                  "fields": [
+                    {
+                      "name": "Sentiment Zone",
+                      "expression": "`Sentiment Zone`"
+                    },
+                    {
+                      "name": "trend_date",
+                      "expression": "`trend_date`"
+                    },
+                    {
+                      "name": "avg(sentiment_index)",
+                      "expression": "AVG(`sentiment_index`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`trend_date` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`sentiment_index` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Sentiment Index Trend Over Time",
+                "showTitle": true
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "widgetType": "area",
+              "encodings": {
+                "x": {
+                  "fieldName": "trend_date",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(sentiment_index)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 3
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Avg Sentiment Index",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "Sentiment Zone",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "Sentiment Zone",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Positive",
+                        "color": "#2ECC71"
+                      },
+                      {
+                        "value": "Neutral",
+                        "color": "#F39C12"
+                      },
+                      {
+                        "value": "Negative",
+                        "color": "#E74C3C"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "79f93644",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "368e2037",
+                  "fields": [
+                    {
+                      "name": "sum(tweet_volume)",
+                      "expression": "SUM(`tweet_volume`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Tweet Vol.",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(tweet_volume)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Total Tweet Volume"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 5,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "887a321a",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "368e2037",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`is_top3` IN (true)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Top 3 Trends",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Top 3 Trends"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "6e7e63ca",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "368e2037",
+                  "fields": [
+                    {
+                      "name": "avg(sentiment_index)",
+                      "expression": "AVG(`sentiment_index`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Avg Sentiment Idx",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(sentiment_index)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 2
+                    },
+                    "abbreviation": "none"
+                  },
+                  "displayName": "Avg Sentiment Index"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "a408dbf0",
+      "displayName": "Users and influence",
+      "layout": [
+        {
+          "widget": {
+            "name": "06ee0bd8",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7e40ac0d",
+                  "fields": [
+                    {
+                      "name": "user_id",
+                      "expression": "`user_id`"
+                    },
+                    {
+                      "name": "country",
+                      "expression": "`country`"
+                    },
+                    {
+                      "name": "followers_count",
+                      "expression": "`followers_count`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Top Users by Followers",
+                "showTitle": true
+              },
+              "rowsPerPage": 25,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "user_id",
+                    "displayName": "User"
+                  },
+                  {
+                    "fieldName": "country",
+                    "displayName": "Country"
+                  },
+                  {
+                    "fieldName": "followers_count",
+                    "displayName": "Followers"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "e04c1de1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "63b8933e",
+                  "fields": [
+                    {
+                      "name": "influence_score",
+                      "expression": "`influence_score`"
+                    },
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`influence_score` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Influence Score Distribution",
+                "showTitle": true
+              },
+              "widgetType": "histogram",
+              "encodings": {
+                "x": {
+                  "fieldName": "influence_score",
+                  "displayName": "Influence Score",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "count(*)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "User Count",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "influence_score",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Influence Score",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 10,
+            "width": 12,
+            "height": 9
+          }
+        },
+        {
+          "widget": {
+            "name": "e2161f1d",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "63b8933e",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    },
+                    {
+                      "name": "follower_segment",
+                      "expression": "`follower_segment`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`follower_segment` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Follower Segments",
+                "showTitle": true
+              },
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "count(*)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "User Count"
+                },
+                "color": {
+                  "fieldName": "follower_segment",
+                  "legend": {
+                    "position": "right"
+                  },
+                  "displayName": "Follower Segment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Macro Influencer",
+                        "color": "#2ECC71"
+                      },
+                      {
+                        "value": "Micro Influencer",
+                        "color": "#3498DB"
+                      },
+                      {
+                        "value": "Regular User",
+                        "color": "#F39C12"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "6afe92a3",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "48df8e7b",
+                  "fields": [
+                    {
+                      "name": "created_date",
+                      "expression": "`created_date`"
+                    },
+                    {
+                      "name": "sum(new_users)",
+                      "expression": "SUM(`new_users`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`created_date` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "User Creation Trend",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "created_date",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(new_users)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "New Users",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 25,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "ccb75269",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "40dbf3bd",
+                  "fields": [
+                    {
+                      "name": "country",
+                      "expression": "`country`"
+                    },
+                    {
+                      "name": "avg(avg_followers)",
+                      "expression": "AVG(`avg_followers`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`country` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`country` NOT IN ('')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Avg Followers by Country",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "country",
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Country",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "avg(avg_followers)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  },
+                  "displayName": "Avg Followers",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "country",
+                  "legend": {
+                    "hide": true
+                  },
+                  "displayName": "Country",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 31,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "36e7f12c",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "63b8933e",
+                  "fields": [
+                    {
+                      "name": "follower_segment",
+                      "expression": "`follower_segment`"
+                    },
+                    {
+                      "name": "sum(followers_count)",
+                      "expression": "SUM(`followers_count`)"
+                    },
+                    {
+                      "name": "influence_score",
+                      "expression": "`influence_score`"
+                    },
+                    {
+                      "name": "avg_engagement",
+                      "expression": "`avg_engagement`"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`influence_score` IS NOT NULL"
+                    },
+                    {
+                      "expression": "`avg_engagement` IS NOT NULL"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Engagement vs Influence Score",
+                "showTitle": true
+              },
+              "widgetType": "scatter",
+              "encodings": {
+                "x": {
+                  "fieldName": "influence_score",
+                  "displayName": "Influence Score",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "avg_engagement",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Avg Engagement",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "follower_segment",
+                  "legend": {
+                    "position": "top"
+                  },
+                  "displayName": "Follower Segment",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Macro Influencer",
+                        "color": "#2ECC71"
+                      },
+                      {
+                        "value": "Micro Influencer",
+                        "color": "#3498DB"
+                      },
+                      {
+                        "value": "Regular User",
+                        "color": "#F39C12"
+                      }
+                    ]
+                  }
+                },
+                "size": {
+                  "fieldName": "sum(followers_count)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Followers"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 19,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "351782c4",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "63b8933e",
+                  "fields": [
+                    {
+                      "name": "avg(followers_count)",
+                      "expression": "AVG(`followers_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Avg Followers",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(followers_count)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Avg Followers"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "1053921f",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "63b8933e",
+                  "fields": [
+                    {
+                      "name": "avg(influence_score)",
+                      "expression": "AVG(`influence_score`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Avg Influence Score",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(influence_score)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "Avg Influence Score"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "2eeaf878",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "48df8e7b",
+                  "fields": [
+                    {
+                      "name": "sum(new_users)",
+                      "expression": "SUM(`new_users`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "New Users (30d)",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(new_users)",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    },
+                    "abbreviation": "compact"
+                  },
+                  "displayName": "New Users"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 4,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
